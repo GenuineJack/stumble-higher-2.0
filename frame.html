@@ -5,77 +5,35 @@
 <title>Stumble Higher – Explore</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{--brand:#FF6D0E;}
+<style>:root{--brand:#FF6D0E;}
 .btn{@apply px-4 py-2 rounded-full font-semibold text-xs w-full flex justify-center items-center;}
-.btn-brand{background-color:var(--brand);}
-.btn-brand:hover{background-color:#e05f04;}
+.btn-brand{background-color:var(--brand);} .btn-brand:hover{background-color:#e05f04;}
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
-
+<iframe id="view" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
-  <div class="min-h-[48px]">
-    <h2 id="title" class="font-semibold text-sm truncate"></h2>
-    <p id="desc" class="text-xs opacity-70 truncate"></p>
-  </div>
+  <div class="min-h-[48px]"><h2 id="t" class="font-semibold text-sm truncate"></h2><p id="d" class="text-xs opacity-70 truncate"></p></div>
   <div class="grid grid-cols-4 gap-3">
-    <button id="homeBtn" class="btn btn-brand" title="Home">🏠</button>
-    <button id="openBtn" class="btn btn-brand" title="Open">🌐</button>
-    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">STUMBLE&nbsp;HIGHER</button>
-    <button id="shareBtn" class="btn btn-brand" title="Share">📤</button>
+    <button id="home"    class="btn btn-brand">🏠</button>
+    <button id="open"    class="btn btn-brand">🌐</button>
+    <button id="next"    class="btn btn-brand">STUMBLE HIGHER</button>
+    <button id="share"   class="btn btn-brand">📤</button>
   </div>
 </div>
-
 <script type="module">
-const Ready=()=>window.parent.postMessage({type:'ready'},'*');
-const Compose=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
+const Ready=()=>parent.postMessage({type:'ready'},'*');
+const Share=txt=>parent.postMessage({type:'compose_cast',text:txt},'*');
 
-let resources=[], current=null;
-
-async function loadResources(){
-  const data=await fetch('resources.json').then(r=>r.json());
-  const arr=Array.isArray(data)?data:(data.resources??data.sites??data.Sites??data.Books??[]);
-  resources=arr.map((it,i)=>({
-      id:it.id??i+1,
-      title:it.title??'Untitled',
-      url:it.link||it.url||it.author||'',
-      description:it.author?`by ${it.author}`:(it.description||'')
-  })).filter(r=>r.url);
-}
-
-const iframe=document.getElementById('webview');
-const titleEl=document.getElementById('title');
-const descEl=document.getElementById('desc');
-
-function proxy(u){return '/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
-
-function pick(){
-  if(!resources.length)return null;
-  let p=resources[Math.floor(Math.random()*resources.length)];
-  while(resources.length>1&&p===current){p=resources[Math.floor(Math.random()*resources.length)];}
-  return p;
-}
-
-function show(res){
-  if(!res){titleEl.textContent='No resources';descEl.textContent='';return;}
-  current=res;
-  iframe.src=proxy(res.url);
-  titleEl.textContent=`#${res.id} — ${res.title}`;
-  descEl.textContent=res.description||'';
-}
-
-document.getElementById('stumbleBtn').onclick=()=>show(pick());
-document.getElementById('openBtn').onclick=()=>current&&window.open(current.url,'_blank');
-document.getElementById('shareBtn').onclick=()=>current&&Compose({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
-document.getElementById('homeBtn').onclick=()=>window.location.href='/';
-
-(async()=>{
-  await loadResources();
-  show(pick());
-  if(window.parent!==window)Ready();
-})();
+let resources=[], cur=null;
+async function load(){resources=(await fetch('resources.json').then(r=>r.json())); if(!Array.isArray(resources)) resources=Object.values(resources)[0];}
+function pick(){if(!resources.length)return null;let p=resources[Math.random()*resources.length|0];while(resources.length>1&&p===cur)p=resources[Math.random()*resources.length|0];return p;}
+function ytembed(u){const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);return 'https://www.youtube.com/embed/'+id;}
+function prox(u){if(/youtu\.be|youtube\.com/.test(u))return ytembed(u);return '/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
+function show(r){if(!r)return;cur=r;view.src=prox(r.link||r.url||r.author);t.textContent=`${r.id?'#'+r.id+' — ':''}${r.title}`;d.textContent=r.author||r.description||'';}
+home.onclick=()=>location.href='/'; open.onclick=()=>cur&&open(cur.link||cur.url||cur.author);
+next.onclick=()=>show(pick()); share.onclick=()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${(cur.link||cur.url||cur.author)}`);
+await load();show(pick());if(parent!==window)Ready();
 </script>
 </body>
 </html>
