@@ -7,13 +7,13 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root{--brand:#FF6D0E;}
-.btn{ @apply px-4 py-2 rounded-full font-semibold text-sm w-full flex justify-center items-center;}
+.btn{ @apply px-4 py-2 rounded-full font-semibold text-xs w-full flex justify-center items-center;}
 .btn-brand{background-color:var(--brand);}
 .btn-brand:hover{background-color:#e05f04;}
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-popups"></iframe>
 
 <!-- Bottom nav -->
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
@@ -23,8 +23,8 @@
   </div>
   <div class="grid grid-cols-4 gap-3">
     <button id="homeBtn" class="btn btn-brand" title="Home">🏠</button>
-    <button id="openBtn" class="btn btn-brand" title="Open in tab">🌐</button>
-    <button id="stumbleBtn" class="btn btn-brand col-span-1" title="Stumble Higher">STUMBLE HIGHER</button>
+    <button id="openBtn" class="btn btn-brand" title="Open">🌐</button>
+    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">STUMBLE HIGHER</button>
     <button id="shareBtn" class="btn btn-brand" title="Share">📤</button>
   </div>
 </div>
@@ -33,51 +33,45 @@
 const Ready=()=>window.parent.postMessage({type:'ready'},'*');
 const ComposeCast=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
 
-let resources=[], current=null;
+let list=[], current=null;
 
-async function fetchResources(){
+async function loadList(){
   try{
-    const data=await fetch('resources.json').then(r=>r.json());
-    resources=data.sites||data.Sites||[];
+    const data=await fetch(new URL('resources.json', location.origin)).then(r=>r.json());
+    list=data.resources||data.sites||data.Sites||[];
   }catch(e){
-    console.error('Fetch error',e);
-    alert('Could not load resources.');
+    console.error(e); alert('Could not load resources.');
   }
 }
 
-function randomResource(){
-  if(!resources.length) return null;
-  let pick=resources[Math.floor(Math.random()*resources.length)];
-  while(resources.length>1 && pick===current){
-    pick=resources[Math.floor(Math.random()*resources.length)];
+function random(){
+  if(!list.length) return null;
+  let pick=list[Math.floor(Math.random()*list.length)];
+  if(list.length>1){
+    while(pick===current) pick=list[Math.floor(Math.random()*list.length)];
   }
   return pick;
 }
 
-const webview=document.getElementById('webview');
-const titleEl=document.getElementById('title');
-const descEl=document.getElementById('desc');
-
-function display(res){
-  if(!res) { titleEl.textContent='No resources'; descEl.textContent=''; return;}
+function render(res){
+  const t=document.getElementById('title');
+  const d=document.getElementById('desc');
+  if(!res){ t.textContent='No resources'; d.textContent=''; return;}
   current=res;
-  webview.src=res.url;
-  titleEl.textContent=res.title;
-  descEl.textContent=res.description||'';
+  document.getElementById('webview').src=res.url;
+  t.textContent=res.title; d.textContent=res.description||'';
 }
 
-async function start(){
-  await fetchResources();
-  display(randomResource());
-  if(window.parent!==window) Ready();
-}
-
-document.getElementById('stumbleBtn').onclick=()=>display(randomResource());
+document.getElementById('stumbleBtn').onclick=()=>render(random());
 document.getElementById('openBtn').onclick=()=>current && window.open(current.url,'_blank');
 document.getElementById('shareBtn').onclick=()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
 document.getElementById('homeBtn').onclick=()=>window.location.href='/';
 
-start();
+(async()=>{
+  await loadList();
+  render(random());
+  if(window.parent!==window) Ready();
+})();
 </script>
 </body>
 </html>
