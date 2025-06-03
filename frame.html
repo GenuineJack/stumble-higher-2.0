@@ -5,35 +5,87 @@
 <title>Stumble Higher – Explore</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.tailwindcss.com"></script>
-<style>:root{--brand:#FF6D0E;}
-.btn{@apply px-4 py-2 rounded-full font-semibold text-xs w-full flex justify-center items-center;}
-.btn-brand{background-color:var(--brand);} .btn-brand:hover{background-color:#e05f04;}
+<style>
+:root{--brand:#FF6D0E;}
+.btn{ @apply px-4 py-2 rounded-full font-semibold text-xs flex justify-center items-center;}
+.btn-icon{width:2.5rem;}
+.btn-brand{background-color:var(--brand);}
+.btn-brand:hover{background-color:#e05f04;}
 </style>
 </head>
-<body class="bg-zinc-900 text-white flex flex-col h-screen">
+<body class="bg-zinc-900 text-white flex flex-col h-screen relative">
 <iframe id="view" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+
+<!-- Loader -->
+<div id="loader" class="absolute inset-0 flex items-center justify-center bg-black/40 hidden">
+  <svg class="animate-spin h-10 w-10 text-white" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+  </svg>
+</div>
+
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
-  <div class="min-h-[48px]"><h2 id="t" class="font-semibold text-sm truncate"></h2><p id="d" class="text-xs opacity-70 truncate"></p></div>
-  <div class="grid grid-cols-4 gap-3">
-    <button id="home"    class="btn btn-brand">🏠</button>
-    <button id="open"    class="btn btn-brand">🌐</button>
-    <button id="next"    class="btn btn-brand">STUMBLE HIGHER</button>
-    <button id="share"   class="btn btn-brand">📤</button>
+  <div class="min-h-[48px]">
+    <h2 id="title" class="font-semibold text-sm truncate"></h2>
+    <p id="desc" class="text-xs opacity-70 truncate"></p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="home"  class="btn btn-brand btn-icon">🏠</button>
+    <button id="open"  class="btn btn-brand btn-icon">🌐</button>
+    <button id="next"  class="flex-1 py-3 rounded-full font-bold text-sm" style="background:var(--brand)">STUMBLE HIGHER</button>
+    <button id="share" class="btn btn-brand btn-icon">📤</button>
   </div>
 </div>
+
 <script type="module">
 const Ready=()=>parent.postMessage({type:'ready'},'*');
 const Share=txt=>parent.postMessage({type:'compose_cast',text:txt},'*');
 
-let resources=[], cur=null;
-async function load(){resources=(await fetch('resources.json').then(r=>r.json())); if(!Array.isArray(resources)) resources=Object.values(resources)[0];}
-function pick(){if(!resources.length)return null;let p=resources[Math.random()*resources.length|0];while(resources.length>1&&p===cur)p=resources[Math.random()*resources.length|0];return p;}
-function ytembed(u){const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);return 'https://www.youtube.com/embed/'+id;}
-function prox(u){if(/youtu\.be|youtube\.com/.test(u))return ytembed(u);return '/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
-function show(r){if(!r)return;cur=r;view.src=prox(r.link||r.url||r.author);t.textContent=`${r.id?'#'+r.id+' — ':''}${r.title}`;d.textContent=r.author||r.description||'';}
-home.onclick=()=>location.href='/'; open.onclick=()=>cur&&open(cur.link||cur.url||cur.author);
-next.onclick=()=>show(pick()); share.onclick=()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${(cur.link||cur.url||cur.author)}`);
-await load();show(pick());if(parent!==window)Ready();
+let res=[], cur=null;
+
+async function loadList(){
+  const data=await fetch('resources.json').then(r=>r.json());
+  const arr=Array.isArray(data)?data:(data.resources??data.sites??data.Sites??data.Books??[]);
+  res=arr.map((item,i)=>({
+    id:item.id??i+1,
+    title:item.title??'Untitled',
+    author:item.author??'',
+    url:item.link||item.url||item.author||'',
+    desc:item.description??''
+  })).filter(r=>r.url);
+}
+
+function ytv(u){
+  const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);
+  return 'https://www.youtube.com/embed/'+id;
+}
+function proxy(u){return /youtube\.com|youtu\.be/.test(u)?ytv(u):'/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
+function pick(){
+  if(!res.length) return null;
+  let p=res[Math.random()*res.length|0];
+  while(res.length>1&&p===cur)p=res[Math.random()*res.length|0];
+  return p;
+}
+const frame=document.getElementById('view');
+const loader=document.getElementById('loader');
+frame.addEventListener('load',()=>loader.classList.add('hidden'));
+
+function show(r){
+  if(!r){title.textContent='No resources';desc.textContent='';return;}
+  cur=r; loader.classList.remove('hidden');
+  frame.src=proxy(r.url);
+  title.textContent=`#${r.id} — ${r.title}`;
+  desc.textContent=r.author||r.desc;
+}
+
+home.onclick = ()=>location.href='/';
+open.onclick = ()=>cur&&window.open(cur.url,'_blank');
+next.onclick = ()=>show(pick());
+share.onclick= ()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${cur.url}`);
+
+await loadList();
+show(pick());
+if(parent!==window)Ready();
 </script>
 </body>
 </html>
