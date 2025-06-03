@@ -22,31 +22,36 @@
   }
 }'/>
 <script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root { --brand:#FF6D0E; }
+.btn-brand{ @apply px-8 py-4 rounded-full font-semibold text-xl transition; background-color:var(--brand);}
+.btn-brand:hover{ background-color:#e05f04;}
+</style>
 </head>
-<body class="bg-zinc-900 text-white flex flex-col min-h-screen">
-<header class="text-center mt-20">
-  <h1 class="text-5xl font-extrabold">Stumble <span class="text-purple-400">Higher</span></h1>
-  <p class="mt-4 text-lg opacity-80 max-w-xl mx-auto">A one‑click portal to the most interesting corners of the web.</p>
-  <div class="mt-8 flex flex-col items-center gap-3">
-    <a href="/frame.html" class="px-8 py-4 rounded-full bg-purple-600 hover:bg-purple-700 text-xl font-semibold transition">Start Stumbling →</a>
-    <button id="aboutBtn" class="underline text-sm opacity-70 hover:opacity-100">About</button>
-  </div>
-</header>
+<body class="bg-zinc-900 text-white flex flex-col justify-center items-center min-h-screen relative">
+<!-- About icon -->
+<button id="aboutBtn" class="absolute top-4 right-4 text-2xl" title="About">❓</button>
 
-<footer class="mt-auto py-6 text-center text-sm opacity-70">
-  A <a href="https://highermarket.xyz/" class="underline hover:text-purple-400">HIGHER MARKET</a> PROJECT
+<main class="text-center space-y-6">
+  <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight">Stumble <span style="color:var(--brand)">Higher</span></h1>
+  <p class="text-lg md:text-2xl max-w-xl mx-auto opacity-80">A one‑click portal to curated articles, books, and tools that push your thinking higher.</p>
+  <a href="/frame.html" class="btn-brand inline-block">Start Stumbling →</a>
+</main>
+
+<footer class="absolute bottom-6 text-sm opacity-70">
+  A <a href="https://highermarket.xyz/" class="underline hover:text-orange-300">HIGHER MARKET</a> PROJECT
 </footer>
 
-<!-- About modal -->
-<div id="aboutModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
-  <div class="bg-zinc-800 max-w-md p-6 rounded-2xl">
+<!-- About Modal -->
+<div id="aboutModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center">
+  <div class="bg-zinc-800 p-6 rounded-2xl max-w-md text-center">
     <h2 class="text-xl font-bold mb-3">About Stumble Higher</h2>
-    <p class="mb-4 text-sm leading-relaxed">
-      Tap <strong>Start Stumbling</strong> to load a random, hand‑picked site. Keep pressing
-      <em>Stumble Higher</em> to jump somewhere new. Share any discovery with your friends,
-      all without leaving Farcaster.
+    <p class="text-sm mb-4 leading-relaxed">
+      Click <strong>Start Stumbling</strong> to load a random, hand‑picked site. <br/>
+      Keep pressing <em>Stumble Higher</em> to jump somewhere new.<br/>
+      Share discoveries with friends—all without leaving Farcaster.
     </p>
-    <button id="closeAbout" class="mt-2 px-4 py-2 bg-purple-600 rounded-full">Got it</button>
+    <button id="closeAbout" class="btn-brand px-6 py-2 text-base">Got it</button>
   </div>
 </div>
 
