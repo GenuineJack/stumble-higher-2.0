@@ -10,57 +10,63 @@
 <body class="bg-zinc-900 text-white flex items-center justify-center min-h-screen p-4">
   <div id="app" class="space-y-4 w-full max-w-md"></div>
 
-  <script type="module">
-     import { createMiniApp } from './frame-core/index.js';
+ <script type="module">
+  /* ---- IMPORT THE LIBRARY YOU DOWNLOADED ---- */
+  import { createMiniApp } from './frame-core/index.js';
 
-    const app = createMiniApp();
-    let resources = [];
+  const app = createMiniApp();
+  let resources = [];
 
-    // Load JSON then start
-    fetch('/resources.json')
-      .then(r => r.json())
-      .then(data => { resources = data.Books; start(); })
-      .catch(err => document.getElementById('app').innerHTML = '<p>Error loading data.</p>');
+  /* LOAD THE JSON DATA */
+  fetch('resources.json')
+    .then(res => res.json())
+    .then(data => { resources = data.Books; start(); })
+    .catch(() => document.getElementById('app').textContent = 'Failed to load data');
 
-    function card(item){
-      return `
-        <article class="border rounded-2xl p-4 shadow-lg bg-gradient-to-br from-zinc-900 to-zinc-800">
-          <h2 class="text-xl font-bold mb-1">${item.title}</h2>
-          ${item.author ? `<p class="opacity-80 mb-3">${item.author}</p>` : ''}
-          <a href="${item.url}" target="_blank" rel="noopener" class="underline">Open in new tab ↗</a>
-        </article>`;
-    }
+  /* RENDER HELPERS */
+  const card = item => `
+    <article class="border rounded-2xl p-4 shadow-lg bg-gradient-to-br from-zinc-900 to-zinc-800">
+      <h2 class="text-xl font-bold mb-1">${item.title}</h2>
+      ${item.author ? `<p class="opacity-80 mb-3">${item.author}</p>` : ''}
+      <a href="${item.url}" target="_blank" rel="noopener" class="underline">
+        Open in new tab ↗
+      </a>
+    </article>
+  `;
 
-    function render(item){
-      const root = document.getElementById('app');
-      root.innerHTML = `
-        ${card(item)}
-        <div class="flex gap-3">
-          <button id="again" class="btn">Stumble Again</button>
-          <button id="share" class="btn">Share ↗</button>
-        </div>
-        <div class="text-center">
-          <a href="/" class="text-sm underline opacity-60 hover:opacity-100">← Home</a>
-        </div>`;
-      document.getElementById('again').onclick = showRandom;
-      document.getElementById('share').onclick = () => app.composeCast({
-        text: \`Found “${item.title}” on Stumble Higher → ${item.url} #StumbleHigher\`
+  const render = item => {
+    document.getElementById('app').innerHTML = `
+      ${card(item)}
+      <div class="flex gap-3 mt-4">
+        <button id="again" class="btn">Stumble Again</button>
+        <button id="share" class="btn">Share ↗</button>
+      </div>
+      <p class="text-center mt-2">
+        <a href="/" class="text-sm underline opacity-60 hover:opacity-100">← Home</a>
+      </p>
+    `;
+
+    document.getElementById('again').onclick = showRandom;
+    document.getElementById('share').onclick  = () =>
+      app.composeCast({
+        text: `Found "${item.title}" on Stumble Higher – ${item.url} #StumbleHigher`
       });
-    }
+  };
 
-    function showRandom(){ render(resources[Math.floor(Math.random()*resources.length)]); }
+  /* LOGIC */
+  const showRandom = () => render(
+    resources[Math.floor(Math.random() * resources.length)]
+  );
 
-    function start(){
-      // If embedded in Farcaster, wait for host ready event; otherwise run immediately
-      if (window.parent !== window){
-        app.onReady(() => {
-          showRandom();
-          app.ready();
-        });
-      } else {
-        showRandom();
-      }
+  const start = () => {
+    if (window.parent !== window) {
+      /* Inside Warpcast */
+      app.onReady(() => { showRandom(); app.ready(); });
+    } else {
+      /* Direct browser visit */
+      showRandom();
     }
-  </script>
+  };
+</script>
 </body>
 </html>
