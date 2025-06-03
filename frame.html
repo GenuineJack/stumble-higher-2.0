@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
+<meta charset="utf-8">
 <title>Stumble Higher – Explore</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root{--brand:#FF6D0E;}
@@ -15,65 +15,69 @@
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
 <iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
 
-<!-- bottom dock -->
+<!-- Bottom nav -->
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
-  <div>
-    <h2 id="resTitle" class="font-semibold text-sm"></h2>
-    <p id="resDesc" class="text-xs opacity-70"></p>
+  <div class="min-h-[48px]">
+    <h2 id="title" class="font-semibold text-sm truncate"></h2>
+    <p id="desc" class="text-xs opacity-70 truncate"></p>
   </div>
-  <div class="grid grid-cols-3 gap-3">
-    <button id="openBtn" class="btn btn-brand" title="Open in new tab">🌐</button>
-    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">Stumble</button>
-    <button id="shareBtn" class="btn btn-brand" title="Share">↗</button>
+  <div class="grid grid-cols-4 gap-3">
+    <button id="homeBtn" class="btn btn-brand" title="Home">🏠</button>
+    <button id="openBtn" class="btn btn-brand" title="Open in tab">🌐</button>
+    <button id="stumbleBtn" class="btn btn-brand col-span-1" title="Stumble Higher">STUMBLE HIGHER</button>
+    <button id="shareBtn" class="btn btn-brand" title="Share">📤</button>
   </div>
 </div>
 
 <script type="module">
-// Farcaster helpers
 const Ready=()=>window.parent.postMessage({type:'ready'},'*');
-const ComposeCast=payload=>window.parent.postMessage({type:'compose_cast',...payload},'*');
+const ComposeCast=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
 
 let resources=[], current=null;
 
-fetch('resources.json')  // relative path
-  .then(r=>r.json())
-  .then(d=>{ resources=d.Sites; start(); })
-  .catch(()=>alert('Could not load resources'));
+async function fetchResources(){
+  try{
+    const data=await fetch('resources.json').then(r=>r.json());
+    resources=data.sites||data.Sites||[];
+  }catch(e){
+    console.error('Fetch error',e);
+    alert('Could not load resources.');
+  }
+}
+
+function randomResource(){
+  if(!resources.length) return null;
+  let pick=resources[Math.floor(Math.random()*resources.length)];
+  while(resources.length>1 && pick===current){
+    pick=resources[Math.floor(Math.random()*resources.length)];
+  }
+  return pick;
+}
 
 const webview=document.getElementById('webview');
-const resTitle=document.getElementById('resTitle');
-const resDesc=document.getElementById('resDesc');
-const stumbleBtn=document.getElementById('stumbleBtn');
-const openBtn=document.getElementById('openBtn');
-const shareBtn=document.getElementById('shareBtn');
+const titleEl=document.getElementById('title');
+const descEl=document.getElementById('desc');
 
-function pickRandom(){
-  if(resources.length===0) return null;
-  let next=resources[Math.floor(Math.random()*resources.length)];
-  while(next===current && resources.length>1){
-    next=resources[Math.floor(Math.random()*resources.length)];
-  }
-  return next;
-}
-
-function load(res){
-  if(!res) return;
+function display(res){
+  if(!res) { titleEl.textContent='No resources'; descEl.textContent=''; return;}
   current=res;
   webview.src=res.url;
-  resTitle.textContent=res.title;
-  resDesc.textContent=res.description||'';
+  titleEl.textContent=res.title;
+  descEl.textContent=res.description||'';
 }
 
-function stumble(){ load(pickRandom()); }
-
-function start(){
-  stumble();
+async function start(){
+  await fetchResources();
+  display(randomResource());
   if(window.parent!==window) Ready();
 }
 
-stumbleBtn.onclick=stumble;
-openBtn.onclick=()=>{ if(current) window.open(current.url,'_blank'); };
-shareBtn.onclick=()=>{ if(current) ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`}); };
+document.getElementById('stumbleBtn').onclick=()=>display(randomResource());
+document.getElementById('openBtn').onclick=()=>current && window.open(current.url,'_blank');
+document.getElementById('shareBtn').onclick=()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
+document.getElementById('homeBtn').onclick=()=>window.location.href='/';
+
+start();
 </script>
 </body>
 </html>
