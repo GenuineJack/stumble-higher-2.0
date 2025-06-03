@@ -13,9 +13,8 @@
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-popups"></iframe>
+<iframe id="webview" class="flex-1 w-full bg-zinc-800"></iframe>
 
-<!-- Bottom nav -->
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
   <div class="min-h-[48px]">
     <h2 id="title" class="font-semibold text-sm truncate"></h2>
@@ -35,31 +34,30 @@ const ComposeCast=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
 
 let list=[], current=null;
 
-async function loadList(){
-  try{
-    const data=await fetch(new URL('resources.json', location.origin)).then(r=>r.json());
-    list=data.resources||data.sites||data.Sites||[];
-  }catch(e){
-    console.error(e); alert('Could not load resources.');
-  }
+async function fetchList(){
+  const data=await fetch('resources.json').then(r=>r.json());
+  list=data.resources||data.sites||data.Sites||[];
 }
 
 function random(){
   if(!list.length) return null;
-  let pick=list[Math.floor(Math.random()*list.length)];
-  if(list.length>1){
-    while(pick===current) pick=list[Math.floor(Math.random()*list.length)];
-  }
-  return pick;
+  let p=list[Math.floor(Math.random()*list.length)];
+  if(list.length>1){ while(p===current) p=list[Math.floor(Math.random()*list.length)]; }
+  return p;
 }
 
+const iframe=document.getElementById('webview');
+const titleEl=document.getElementById('title');
+const descEl=document.getElementById('desc');
+
+function proxy(url){ return '/api/proxy?u='+encodeURIComponent(url); }
+
 function render(res){
-  const t=document.getElementById('title');
-  const d=document.getElementById('desc');
-  if(!res){ t.textContent='No resources'; d.textContent=''; return;}
+  if(!res){ titleEl.textContent='No resources'; descEl.textContent=''; return;}
   current=res;
-  document.getElementById('webview').src=res.url;
-  t.textContent=res.title; d.textContent=res.description||'';
+  iframe.src=proxy(res.url);
+  titleEl.textContent=res.title;
+  descEl.textContent=res.description||'';
 }
 
 document.getElementById('stumbleBtn').onclick=()=>render(random());
@@ -68,7 +66,7 @@ document.getElementById('shareBtn').onclick=()=>current && ComposeCast({text:`Fo
 document.getElementById('homeBtn').onclick=()=>window.location.href='/';
 
 (async()=>{
-  await loadList();
+  await fetchList();
   render(random());
   if(window.parent!==window) Ready();
 })();

@@ -1,5 +1,5 @@
 {
-  "headers": [
-    { "source": "/(.*)", "headers": [{ "key": "X-Frame-Options", "value": "ALLOWALL" }] }
+  "headers":[
+    { "source":"/(.*)", "headers":[ { "key":"X-Frame-Options", "value":"ALLOWALL"} ] }
   ]
 }
