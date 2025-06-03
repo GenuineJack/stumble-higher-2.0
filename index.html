@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <title>Stumble Higher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <meta property="og:title" content="Stumble Higher" />
-  <meta property="og:description" content="Stumble into curated resources that elevate your mind." />
+  <meta property="og:description" content="Discover random, mind‑stretching resources with a single click." />
   <meta property="og:image" content="https://i.imgur.com/CIzWvqk.png" />
 
   <meta name="fc:frame" content='{
@@ -22,9 +23,25 @@
       }
     }
   }' />
-  <style>body{margin:0;background:#141414;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui}h1{text-align:center;font-size:clamp(2rem,5vw,3rem)}</style>
+
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 </head>
-<body>
-  <h1>Stumble Higher<br/><small style="font-size:0.5em;opacity:.6">Share this link on Farcaster</small></h1>
+<body class="bg-zinc-900 text-white min-h-screen flex items-center justify-center">
+  <main class="text-center space-y-8 p-6">
+    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">
+      Stumble <span class="text-purple-400">Higher</span>
+    </h1>
+    <p class="text-lg md:text-2xl max-w-xl mx-auto opacity-80">
+      A one‑click portal to curated articles, books, and tools that push your thinking higher.
+    </p>
+    <a href="/frame.html"
+       class="inline-block px-8 py-4 rounded-full bg-purple-600 hover:bg-purple-700 text-xl font-semibold transition">
+       Start Stumbling →
+    </a>
+
+    <p class="text-sm opacity-60">
+      Tip: share <kbd class="font-mono bg-zinc-800 px-2 py-1 rounded">stumblehigher.press</kbd> on Farcaster to launch the mini‑app in‑cast.
+    </p>
+  </main>
 </body>
 </html>
