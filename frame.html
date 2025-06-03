@@ -10,69 +10,54 @@
 <body class="bg-zinc-900 text-white flex items-center justify-center min-h-screen p-4">
   <div id="app" class="space-y-4 w-full max-w-md"></div>
 
- <script type="module">
-  /* 1️⃣ import the specific actions that really exist */
-  import {
-    Ready,
-    ComposeCast
-  } from './frame-core/actions/index.js';
+ 
+  <script type="module">
+    /* Tiny helpers to talk to Farcaster */
+    const Ready = () => window.parent.postMessage({ type: 'ready' }, '*');
+    const ComposeCast = ({ text }) => window.parent.postMessage({ type: 'compose_cast', text }, '*');
 
-  /* 2️⃣ fetch the JSON with our resources */
-  let resources = [];
-  fetch('resources.json')
-    .then(r => r.json())
-    .then(data => { resources = data.Books; start(); })
-    .catch(() => showMessage('Failed to load data'));
+    /* Load resources.json */
+    let resources = [];
+    fetch('resources.json')
+      .then(r => r.json())
+      .then(d => { resources = d.Books; start(); })
+      .catch(() => document.getElementById('app').textContent = 'Failed to load data');
 
-  /* 3️⃣ DOM helper functions */
-  const el = id => document.getElementById(id);
+    /* DOM helpers */
+    const el = id => document.getElementById(id);
 
-  const card = item => `
-    <article class="border rounded-2xl p-4 shadow-lg bg-gradient-to-br from-zinc-900 to-zinc-800">
-      <h2 class="text-xl font-bold mb-1">${item.title}</h2>
-      ${item.author ? `<p class="opacity-80 mb-3">${item.author}</p>` : ''}
-      <a href="${item.url}" target="_blank" rel="noopener" class="underline">
-        Open in new tab ↗
-      </a>
-    </article>
-  `;
-
-  function showMessage(text) {
-    el('app').innerHTML = `<p class="text-center opacity-70">${text}</p>`;
-  }
-
-  function render(item) {
-    el('app').innerHTML = `
-      ${card(item)}
-      <div class="flex gap-3 mt-4">
-        <button id="again" class="btn">Stumble Again</button>
-        <button id="share" class="btn">Share ↗</button>
-      </div>
-      <p class="text-center mt-3">
-        <a href="/" class="text-sm underline opacity-60 hover:opacity-100">← Home</a>
-      </p>
+    const card = item => `
+      <article class="border rounded-2xl p-4 shadow-lg bg-gradient-to-br from-zinc-900 to-zinc-800">
+        <h2 class="text-xl font-bold mb-1">${item.title}</h2>
+        ${item.author ? `<p class="opacity-80 mb-3">${item.author}</p>` : ''}
+        <a href="${item.url}" target="_blank" rel="noopener" class="underline">
+          Open in new tab ↗
+        </a>
+      </article>
     `;
 
-    /* wire buttons */
-    el('again').onclick = showRandom;
-    el('share').onclick = () =>
-      ComposeCast({            /* ✅ works in this frame-core version */
-        text: `Found "${item.title}" on Stumble Higher – ${item.url} #StumbleHigher`
-      });
-  }
+    const render = item => {
+      el('app').innerHTML = `
+        ${card(item)}
+        <div class="flex gap-3 mt-4">
+          <button id="again" class="btn">Stumble Again</button>
+          <button id="share" class="btn">Share ↗</button>
+        </div>
+        <p class="text-center mt-3">
+          <a href="/" class="text-sm underline opacity-60 hover:opacity-100">← Home</a>
+        </p>
+      `;
+      el('again').onclick = showRandom;
+      el('share').onclick  = () => ComposeCast({ text: `Found "${item.title}" on Stumble Higher – ${item.url} #StumbleHigher` });
+    };
 
-  /* 4️⃣ app logic */
-  const showRandom = () =>
-    render(resources[Math.floor(Math.random() * resources.length)]);
+    const showRandom = () => render(
+      resources[Math.floor(Math.random() * resources.length)]
+    );
 
-  function start() {
-    /* If we’re inside Farcaster (frame), send the Ready action */
-    if (window.parent !== window) {
+    function start() {
       showRandom();
-      Ready();                /* ✅ tells Warpcast the frame is ready */
-    } else {
-      /* opened directly in a browser tab */
-      showRandom();
+      if (window.parent !== window) Ready();
     }
-  }
-</script>
+  </script>
+
