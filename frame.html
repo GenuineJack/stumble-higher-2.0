@@ -7,7 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root{--brand:#FF6D0E;}
-.btn{ @apply px-4 py-2 rounded-full font-semibold text-xs w-full flex justify-center items-center;}
+.btn{@apply px-4 py-2 rounded-full font-semibold text-xs w-full flex justify-center items-center;}
 .btn-brand{background-color:var(--brand);}
 .btn-brand:hover{background-color:#e05f04;}
 </style>
@@ -23,63 +23,58 @@
   <div class="grid grid-cols-4 gap-3">
     <button id="homeBtn" class="btn btn-brand" title="Home">🏠</button>
     <button id="openBtn" class="btn btn-brand" title="Open">🌐</button>
-    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">STUMBLE HIGHER</button>
+    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">STUMBLE&nbsp;HIGHER</button>
     <button id="shareBtn" class="btn btn-brand" title="Share">📤</button>
   </div>
 </div>
 
 <script type="module">
 const Ready=()=>window.parent.postMessage({type:'ready'},'*');
-const ComposeCast=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
+const Compose=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
 
 let resources=[], current=null;
 
 async function loadResources(){
-  const data = await fetch('resources.json').then(r=>r.json());
-  const raw = data.resources ?? data.sites ?? data.Sites ?? data.Books ?? [];
-  resources = raw
-    .map(it=>{
-      const url = it.author || it.url || it.link || '';
-      if(!url) return null;
-      return { id:it.id??'', title:it.title??'Untitled', url, description:it.description??'' };
-    })
-    .filter(Boolean);
+  const data=await fetch('resources.json').then(r=>r.json());
+  const arr=Array.isArray(data)?data:(data.resources??data.sites??data.Sites??data.Books??[]);
+  resources=arr.map((it,i)=>({
+      id:it.id??i+1,
+      title:it.title??'Untitled',
+      url:it.link||it.url||it.author||'',
+      description:it.author?`by ${it.author}`:(it.description||'')
+  })).filter(r=>r.url);
 }
 
+const iframe=document.getElementById('webview');
+const titleEl=document.getElementById('title');
+const descEl=document.getElementById('desc');
+
+function proxy(u){return '/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
+
 function pick(){
-  if(!resources.length) return null;
-  let p = resources[Math.floor(Math.random()*resources.length)];
-  while(resources.length>1 && p===current){
-    p = resources[Math.floor(Math.random()*resources.length)];
-  }
+  if(!resources.length)return null;
+  let p=resources[Math.floor(Math.random()*resources.length)];
+  while(resources.length>1&&p===current){p=resources[Math.floor(Math.random()*resources.length)];}
   return p;
 }
 
-function proxy(url){
-  return '/api/proxy?u='+encodeURIComponent(url)+'&ua='+encodeURIComponent(navigator.userAgent);
-}
-
 function show(res){
-  if(!res){ titleEl.textContent='No resources'; descEl.textContent=''; return;}
+  if(!res){titleEl.textContent='No resources';descEl.textContent='';return;}
   current=res;
-  iframe.src = proxy(res.url);
-  titleEl.textContent = `${res.id ? '#' + res.id + ' — ' : ''}${res.title}`;
-  descEl.textContent = res.description;
+  iframe.src=proxy(res.url);
+  titleEl.textContent=`#${res.id} — ${res.title}`;
+  descEl.textContent=res.description||'';
 }
 
-const iframe  = document.getElementById('webview');
-const titleEl = document.getElementById('title');
-const descEl  = document.getElementById('desc');
-
-document.getElementById('stumbleBtn').onclick = ()=>show(pick());
-document.getElementById('openBtn').onclick    = ()=>current && window.open(current.url,'_blank');
-document.getElementById('shareBtn').onclick   = ()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
-document.getElementById('homeBtn').onclick    = ()=>window.location.href='/';
+document.getElementById('stumbleBtn').onclick=()=>show(pick());
+document.getElementById('openBtn').onclick=()=>current&&window.open(current.url,'_blank');
+document.getElementById('shareBtn').onclick=()=>current&&Compose({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
+document.getElementById('homeBtn').onclick=()=>window.location.href='/';
 
 (async()=>{
   await loadResources();
   show(pick());
-  if(window.parent!==window) Ready();
+  if(window.parent!==window)Ready();
 })();
 </script>
 </body>
