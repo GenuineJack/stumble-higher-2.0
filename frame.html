@@ -13,7 +13,7 @@
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-popups"></iframe>
+<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
 
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
   <div class="min-h-[48px]">
@@ -32,49 +32,53 @@
 const Ready=()=>window.parent.postMessage({type:'ready'},'*');
 const ComposeCast=p=>window.parent.postMessage({type:'compose_cast',...p},'*');
 
-let list=[], current=null;
+let resources=[], current=null;
 
-async function fetchList(){
-  const data=await fetch('resources.json').then(r=>r.json());
-  const raw=data.resources||data.sites||data.Sites||data.Books||[];
-  list=raw.map(it=>{
-    const url=it.url||it.link||it.author||'';
-    if(!url) return null;
-    return { title:it.title||'Untitled', url, description:it.description||'' };
-  }).filter(Boolean);
+async function loadResources(){
+  const data = await fetch('resources.json').then(r=>r.json());
+  const raw = data.resources ?? data.sites ?? data.Sites ?? data.Books ?? [];
+  resources = raw
+    .map(it=>{
+      const url = it.author || it.url || it.link || '';
+      if(!url) return null;
+      return { id:it.id??'', title:it.title??'Untitled', url, description:it.description??'' };
+    })
+    .filter(Boolean);
 }
 
-function random(){
-  if(!list.length) return null;
-  let pick=list[Math.floor(Math.random()*list.length)];
-  while(list.length>1 && pick===current){
-    pick=list[Math.floor(Math.random()*list.length)];
+function pick(){
+  if(!resources.length) return null;
+  let p = resources[Math.floor(Math.random()*resources.length)];
+  while(resources.length>1 && p===current){
+    p = resources[Math.floor(Math.random()*resources.length)];
   }
-  return pick;
+  return p;
 }
 
-const iframe=document.getElementById('webview');
-const titleEl=document.getElementById('title');
-const descEl=document.getElementById('desc');
-
-function proxied(url){ return '/api/proxy?u='+encodeURIComponent(url); }
+function proxy(url){
+  return '/api/proxy?u='+encodeURIComponent(url)+'&ua='+encodeURIComponent(navigator.userAgent);
+}
 
 function show(res){
   if(!res){ titleEl.textContent='No resources'; descEl.textContent=''; return;}
   current=res;
-  iframe.src=proxied(res.url);
-  titleEl.textContent=res.title;
-  descEl.textContent=res.description;
+  iframe.src = proxy(res.url);
+  titleEl.textContent = `${res.id ? '#' + res.id + ' — ' : ''}${res.title}`;
+  descEl.textContent = res.description;
 }
 
-document.getElementById('stumbleBtn').onclick=()=>show(random());
-document.getElementById('openBtn').onclick=()=>current && window.open(current.url,'_blank');
-document.getElementById('shareBtn').onclick=()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
-document.getElementById('homeBtn').onclick=()=>window.location.href='/';
+const iframe  = document.getElementById('webview');
+const titleEl = document.getElementById('title');
+const descEl  = document.getElementById('desc');
+
+document.getElementById('stumbleBtn').onclick = ()=>show(pick());
+document.getElementById('openBtn').onclick    = ()=>current && window.open(current.url,'_blank');
+document.getElementById('shareBtn').onclick   = ()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
+document.getElementById('homeBtn').onclick    = ()=>window.location.href='/';
 
 (async()=>{
-  await fetchList();
-  show(random());
+  await loadResources();
+  show(pick());
   if(window.parent!==window) Ready();
 })();
 </script>
