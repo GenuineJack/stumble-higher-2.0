@@ -1,0 +1,28 @@
+{
+  "Books": [
+    {
+      "id": 1,
+      "title": "The Creative Act: A Way of Being",
+      "author": "Rick Rubin",
+      "url": "https://example.com/book1"
+    },
+    {
+      "id": 2,
+      "title": "Show Your Work!",
+      "author": "Austin Kleon",
+      "url": "https://example.com/book2"
+    },
+    {
+      "id": 3,
+      "title": "Steal Like an Artist",
+      "author": "Austin Kleon",
+      "url": "https://example.com/book3"
+    },
+    {
+      "id": 4,
+      "title": "The Obstacle Is the Way",
+      "author": "Ryan Holiday",
+      "url": "https://example.com/book4"
+    }
+  ]
+}
