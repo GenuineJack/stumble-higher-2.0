@@ -12,16 +12,17 @@
   <script type="module">
     import { createMiniApp } from 'https://esm.sh/@farcaster/frame-core@1.1.0?bundle';
 
-    const resources = await fetch('./resources.json').then(r=>r.json()).then(j=>j.Books);
-
     const app = createMiniApp();
+
+    // Fetch resources once
+    const resources = await fetch('./resources.json').then(r => r.json()).then(j => j.Books);
 
     function render(card){
       const root=document.getElementById('app');
       root.innerHTML=`
         <article class="border rounded-2xl p-4 shadow-lg bg-gradient-to-br from-zinc-900 to-zinc-800">
           <h2 class="text-xl font-bold mb-1">${card.title}</h2>
-          <p class="opacity-80 mb-3">${card.author??''}</p>
+          <p class="opacity-80 mb-3">${card.author ?? ''}</p>
           <a href="${card.url}" target="_blank" class="underline">Open in new tab ↗</a>
         </article>
         <div class="flex gap-3">
@@ -30,12 +31,18 @@
         </div>
       `;
       document.getElementById('again').onclick = showRandom;
-      document.getElementById('share').onclick = ()=>app.composeCast({text:`Found “${card.title}” on Stumble Higher → ${card.url} #StumbleHigher`});
+      document.getElementById('share').onclick = () => app.composeCast({
+        text: \`Found “${card.title}” on Stumble Higher → ${card.url} #StumbleHigher\`
+      });
     }
 
     function showRandom(){ render(resources[Math.floor(Math.random()*resources.length)]); }
 
-    app.onReady(showRandom);
+    // Host -> frame: ready event; then we render and notify host we're ready
+    app.onReady(() => {
+      showRandom();
+      app.ready(); // 🚀 notify Farcaster we are good to display
+    });
   </script>
 </body>
 </html>
