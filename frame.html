@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root { --brand:#FF6D0E; }
-.btn{ @apply px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-1;}
-.btn-brand{ background-color:var(--brand);}
+:root{--brand:#FF6D0E;}
+.btn{ @apply px-4 py-2 rounded-full font-semibold text-sm w-full flex justify-center items-center;}
+.btn-brand{background-color:var(--brand);}
 .btn-brand:hover{background-color:#e05f04;}
 </style>
 </head>
@@ -16,14 +16,16 @@
 <iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
 
 <!-- bottom dock -->
-<div class="bg-zinc-950/80 backdrop-blur-sm p-3 flex items-center gap-3">
-  <div class="flex-1">
+<div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
+  <div>
     <h2 id="resTitle" class="font-semibold text-sm"></h2>
     <p id="resDesc" class="text-xs opacity-70"></p>
   </div>
-  <button id="stumbleBtn" class="btn btn-brand">Stumble Higher</button>
-  <button id="openBtn" class="btn btn-brand" title="Open in new tab">🌐</button>
-  <button id="shareBtn" class="btn btn-brand" title="Share">↗</button>
+  <div class="grid grid-cols-3 gap-3">
+    <button id="openBtn" class="btn btn-brand" title="Open in new tab">🌐</button>
+    <button id="stumbleBtn" class="btn btn-brand" title="Stumble Higher">Stumble</button>
+    <button id="shareBtn" class="btn btn-brand" title="Share">↗</button>
+  </div>
 </div>
 
 <script type="module">
@@ -33,7 +35,10 @@ const ComposeCast=payload=>window.parent.postMessage({type:'compose_cast',...pay
 
 let resources=[], current=null;
 
-fetch('/resources.json').then(r=>r.json()).then(d=>{resources=d.Sites; start();}).catch(()=>alert('Could not load resources.'));
+fetch('resources.json')  // relative path
+  .then(r=>r.json())
+  .then(d=>{ resources=d.Sites; start(); })
+  .catch(()=>alert('Could not load resources'));
 
 const webview=document.getElementById('webview');
 const resTitle=document.getElementById('resTitle');
