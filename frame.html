@@ -13,7 +13,7 @@
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800"></iframe>
+<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-popups"></iframe>
 
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
   <div class="min-h-[48px]">
@@ -36,38 +36,45 @@ let list=[], current=null;
 
 async function fetchList(){
   const data=await fetch('resources.json').then(r=>r.json());
-  list=data.resources||data.sites||data.Sites||[];
+  const raw=data.resources||data.sites||data.Sites||data.Books||[];
+  list=raw.map(it=>{
+    const url=it.url||it.link||it.author||'';
+    if(!url) return null;
+    return { title:it.title||'Untitled', url, description:it.description||'' };
+  }).filter(Boolean);
 }
 
 function random(){
   if(!list.length) return null;
-  let p=list[Math.floor(Math.random()*list.length)];
-  if(list.length>1){ while(p===current) p=list[Math.floor(Math.random()*list.length)]; }
-  return p;
+  let pick=list[Math.floor(Math.random()*list.length)];
+  while(list.length>1 && pick===current){
+    pick=list[Math.floor(Math.random()*list.length)];
+  }
+  return pick;
 }
 
 const iframe=document.getElementById('webview');
 const titleEl=document.getElementById('title');
 const descEl=document.getElementById('desc');
 
-function proxy(url){ return '/api/proxy?u='+encodeURIComponent(url); }
+function proxied(url){ return '/api/proxy?u='+encodeURIComponent(url); }
 
-function render(res){
+function show(res){
   if(!res){ titleEl.textContent='No resources'; descEl.textContent=''; return;}
   current=res;
-  iframe.src=proxy(res.url);
+  iframe.src=proxied(res.url);
   titleEl.textContent=res.title;
-  descEl.textContent=res.description||'';
+  descEl.textContent=res.description;
 }
 
-document.getElementById('stumbleBtn').onclick=()=>render(random());
+document.getElementById('stumbleBtn').onclick=()=>show(random());
 document.getElementById('openBtn').onclick=()=>current && window.open(current.url,'_blank');
 document.getElementById('shareBtn').onclick=()=>current && ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
 document.getElementById('homeBtn').onclick=()=>window.location.href='/';
 
 (async()=>{
   await fetchList();
-  render(random());
+  show(random());
   if(window.parent!==window) Ready();
 })();
 </script>

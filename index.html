@@ -24,9 +24,11 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root{--brand:#FF6D0E;}
-.btn-brand{@apply inline-block px-14 py-5 rounded-full font-semibold text-xl transition shadow-lg;}
-.btn-brand{background-color:var(--brand); letter-spacing:0.02em;}
-.btn-brand:hover{background-color:#e05f04; transform:translateY(-3px);}
+.btn-brand{
+  @apply inline-block px-16 py-6 rounded-full font-semibold text-xl transition shadow-lg;
+  background-color:var(--brand); letter-spacing:0.02em;
+}
+.btn-brand:hover{background-color:#e05f04;transform:translateY(-3px);}
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col justify-center items-center min-h-screen relative text-center">
