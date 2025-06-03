@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Stumble Higher – Frame</title>
+<title>Stumble Higher – Explore</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-.btn{ @apply flex items-center gap-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-full font-semibold text-sm;}
+:root { --brand:#FF6D0E; }
+.btn{ @apply px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-1;}
+.btn-brand{ background-color:var(--brand);}
+.btn-brand:hover{background-color:#e05f04;}
 </style>
 </head>
 <body class="bg-zinc-900 text-white flex flex-col h-screen">
-<iframe id="webview" class="flex-1 w-full bg-zinc-800" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+<iframe id="webview" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
 
 <!-- bottom dock -->
 <div class="bg-zinc-950/80 backdrop-blur-sm p-3 flex items-center gap-3">
@@ -18,19 +21,19 @@
     <h2 id="resTitle" class="font-semibold text-sm"></h2>
     <p id="resDesc" class="text-xs opacity-70"></p>
   </div>
-  <button id="stumbleBtn" class="btn">Stumble Higher</button>
-  <button id="openBtn" class="btn" title="Open in new tab">🌐</button>
-  <button id="shareBtn" class="btn" title="Share">↗</button>
+  <button id="stumbleBtn" class="btn btn-brand">Stumble Higher</button>
+  <button id="openBtn" class="btn btn-brand" title="Open in new tab">🌐</button>
+  <button id="shareBtn" class="btn btn-brand" title="Share">↗</button>
 </div>
 
 <script type="module">
-// Tiny Farcaster helpers
+// Farcaster helpers
 const Ready=()=>window.parent.postMessage({type:'ready'},'*');
 const ComposeCast=payload=>window.parent.postMessage({type:'compose_cast',...payload},'*');
 
 let resources=[], current=null;
 
-fetch('resources.json').then(r=>r.json()).then(d=>{resources=d.Sites; start();}).catch(()=>alert('Failed to load resources'));
+fetch('/resources.json').then(r=>r.json()).then(d=>{resources=d.Sites; start();}).catch(()=>alert('Could not load resources.'));
 
 const webview=document.getElementById('webview');
 const resTitle=document.getElementById('resTitle');
@@ -40,11 +43,16 @@ const openBtn=document.getElementById('openBtn');
 const shareBtn=document.getElementById('shareBtn');
 
 function pickRandom(){
-  const next=resources[Math.floor(Math.random()*resources.length)];
-  return next===current?pickRandom():next;
+  if(resources.length===0) return null;
+  let next=resources[Math.floor(Math.random()*resources.length)];
+  while(next===current && resources.length>1){
+    next=resources[Math.floor(Math.random()*resources.length)];
+  }
+  return next;
 }
 
 function load(res){
+  if(!res) return;
   current=res;
   webview.src=res.url;
   resTitle.textContent=res.title;
@@ -59,10 +67,8 @@ function start(){
 }
 
 stumbleBtn.onclick=stumble;
-openBtn.onclick=()=>{ if(current) window.open(current.url,'_blank') };
-shareBtn.onclick=()=>{
-  if(current) ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`});
-};
+openBtn.onclick=()=>{ if(current) window.open(current.url,'_blank'); };
+shareBtn.onclick=()=>{ if(current) ComposeCast({text:`Found "${current.title}" on Stumble Higher – ${current.url} #StumbleHigher`}); };
 </script>
 </body>
 </html>
