@@ -1,47 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Stumble Higher</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <meta property="og:title" content="Stumble Higher" />
-  <meta property="og:description" content="Discover random, mind‑stretching resources with a single click." />
-  <meta property="og:image" content="https://i.imgur.com/CIzWvqk.png" />
-
-  <meta name="fc:frame" content='{
-    "version":"next",
-    "imageUrl":"https://i.imgur.com/CIzWvqk.png",
-    "button":{
-      "title":"Start Stumbling",
-      "action":{
-        "type":"launch_frame",
-        "name":"Stumble Higher",
-        "url":"https://www.stumblehigher.press/frame.html",
-        "splashImageUrl":"https://i.imgur.com/CIzWvqk.png",
-        "splashBackgroundColor":"#141414"
-      }
+<meta charset="utf-8"/>
+<title>Stumble Higher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta property="og:title" content="Stumble Higher"/>
+<meta property="og:description" content="Press one button. Discover the web."/>
+<meta property="og:image" content="https://i.imgur.com/CIzWvqk.png"/>
+<meta name="fc:frame" content='{
+  "version":"next",
+  "imageUrl":"https://i.imgur.com/CIzWvqk.png",
+  "button":{
+    "title":"Start Stumbling",
+    "action":{
+      "type":"launch_frame",
+      "name":"Stumble Higher",
+      "url":"https://www.stumblehigher.press/frame.html",
+      "splashImageUrl":"https://i.imgur.com/CIzWvqk.png",
+      "splashBackgroundColor":"#141414"
     }
-  }' />
-
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  }
+}'/>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-zinc-900 text-white min-h-screen flex items-center justify-center">
-  <main class="text-center space-y-8 p-6">
-    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">
-      Stumble <span class="text-purple-400">Higher</span>
-    </h1>
-    <p class="text-lg md:text-2xl max-w-xl mx-auto opacity-80">
-      A one‑click portal to curated articles, books, and tools that push your thinking higher.
-    </p>
-    <a href="/frame.html"
-       class="inline-block px-8 py-4 rounded-full bg-purple-600 hover:bg-purple-700 text-xl font-semibold transition">
-       Start Stumbling →
-    </a>
+<body class="bg-zinc-900 text-white flex flex-col min-h-screen">
+<header class="text-center mt-20">
+  <h1 class="text-5xl font-extrabold">Stumble <span class="text-purple-400">Higher</span></h1>
+  <p class="mt-4 text-lg opacity-80 max-w-xl mx-auto">A one‑click portal to the most interesting corners of the web.</p>
+  <div class="mt-8 flex flex-col items-center gap-3">
+    <a href="/frame.html" class="px-8 py-4 rounded-full bg-purple-600 hover:bg-purple-700 text-xl font-semibold transition">Start Stumbling →</a>
+    <button id="aboutBtn" class="underline text-sm opacity-70 hover:opacity-100">About</button>
+  </div>
+</header>
 
-    <p class="text-sm opacity-60">
-      Tip: share <kbd class="font-mono bg-zinc-800 px-2 py-1 rounded">stumblehigher.press</kbd> on Farcaster to launch the mini‑app in‑cast.
+<footer class="mt-auto py-6 text-center text-sm opacity-70">
+  A <a href="https://highermarket.xyz/" class="underline hover:text-purple-400">HIGHER MARKET</a> PROJECT
+</footer>
+
+<!-- About modal -->
+<div id="aboutModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+  <div class="bg-zinc-800 max-w-md p-6 rounded-2xl">
+    <h2 class="text-xl font-bold mb-3">About Stumble Higher</h2>
+    <p class="mb-4 text-sm leading-relaxed">
+      Tap <strong>Start Stumbling</strong> to load a random, hand‑picked site. Keep pressing
+      <em>Stumble Higher</em> to jump somewhere new. Share any discovery with your friends,
+      all without leaving Farcaster.
     </p>
-  </main>
+    <button id="closeAbout" class="mt-2 px-4 py-2 bg-purple-600 rounded-full">Got it</button>
+  </div>
+</div>
+
+<script>
+const aboutBtn=document.getElementById('aboutBtn');
+const aboutModal=document.getElementById('aboutModal');
+const closeAbout=document.getElementById('closeAbout');
+aboutBtn.onclick=()=>aboutModal.classList.remove('hidden');
+closeAbout.onclick=()=>aboutModal.classList.add('hidden');
+</script>
 </body>
 </html>
