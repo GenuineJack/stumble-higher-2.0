@@ -1,1 +1,91 @@
-<!DOCTYPE html><html><head><meta charset='utf-8'><title>Frame</title><meta name='viewport' content='width=device-width, initial-scale=1'><script src='https://cdn.tailwindcss.com'></script><style>:root{--brand:#FF6D0E}.btn{padding:.5rem 1rem;border-radius:9999px;background:var(--brand);font-size:.75rem;font-weight:600;width:2.5rem}.btn#next{flex:1;padding:.75rem 0;font-weight:700}.btn:hover{background:#e05f04}</style></head><body class='bg-zinc-900 text-white flex flex-col h-screen relative'><iframe id='f' class='flex-1 w-full bg-zinc-800' sandbox='allow-scripts allow-same-origin allow-popups allow-forms'></iframe><div id='load' class='absolute inset-0 hidden items-center justify-center bg-black/40'><svg class='animate-spin h-10 w-10' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='10' stroke='white' stroke-width='4' class='opacity-25'/><path d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z' fill='white' class='opacity-75'/></svg></div><div class='bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2'><div><h2 id='t' class='font-semibold text-sm truncate'></h2><p id='d' class='text-xs opacity-70 truncate'></p></div><div class='flex items-center gap-2'><button id='home' class='btn'>🏠</button><button id='open' class='btn'>🌐</button><button id='next' class='btn' style='width:auto'>STUMBLE&nbsp;HIGHER</button><button id='share' class='btn'>📤</button></div></div><script type='module'>const Ready=()=>parent.postMessage({type:'ready'},'*');const Share=t=>parent.postMessage({type:'compose_cast',text:t},'*');let list=[],cur=null,timer=null;const TIMEOUT=3000;const iframe=document.getElementById('f'),loader=document.getElementById('load'),title=document.getElementById('t'),desc=document.getElementById('d');iframe.addEventListener('load',()=>{loader.classList.add('hidden');if(timer){clearTimeout(timer);timer=null}});function yt(u){const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);return'https://www.youtube.com/embed/'+id}function proxy(u){return /youtu/.test(u)?yt(u):'/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent)}function pick(){if(!list.length)return null;let p=list[Math.random()*list.length|0];while(list.length>1&&p===cur)p=list[Math.random()*list.length|0];return p}function show(r){if(!r)return;cur=r;loader.classList.remove('hidden');if(timer)clearTimeout(timer);timer=setTimeout(()=>show(pick()),TIMEOUT);iframe.src=proxy(r.url);title.textContent='#'+r.id+' — '+r.title;desc.textContent=r.author||r.description||''}home.onclick=()=>location.href='/';open.onclick=()=>cur&&window.open(cur.url,'_blank');next.onclick=()=>show(pick());share.onclick=()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${cur.url}`);const data=await fetch('resources.json').then(r=>r.json());list=(Array.isArray(data)?data:data.resources)||[];show(pick());if(parent!==window)Ready();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stumble Higher – Explore</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--brand:#FF6D0E;}
+.btn{ @apply px-4 py-2 rounded-full font-semibold text-xs flex justify-center items-center;}
+.btn-icon{width:2.5rem;}
+.btn-brand{background-color:var(--brand);}
+.btn-brand:hover{background-color:#e05f04;}
+</style>
+</head>
+<body class="bg-zinc-900 text-white flex flex-col h-screen relative">
+<iframe id="view" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+
+<!-- Loader -->
+<div id="loader" class="absolute inset-0 flex items-center justify-center bg-black/40 hidden">
+  <svg class="animate-spin h-10 w-10 text-white" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+  </svg>
+</div>
+
+<div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
+  <div class="min-h-[48px]">
+    <h2 id="title" class="font-semibold text-sm truncate"></h2>
+    <p id="desc" class="text-xs opacity-70 truncate"></p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="home"  class="btn btn-brand btn-icon">🏠</button>
+    <button id="open"  class="btn btn-brand btn-icon">🌐</button>
+    <button id="next"  class="flex-1 py-3 rounded-full font-bold text-sm" style="background:var(--brand)">STUMBLE HIGHER</button>
+    <button id="share" class="btn btn-brand btn-icon">📤</button>
+  </div>
+</div>
+
+<script type="module">
+const Ready=()=>parent.postMessage({type:'ready'},'*');
+const Share=txt=>parent.postMessage({type:'compose_cast',text:txt},'*');
+
+let res=[], cur=null;
+
+async function loadList(){
+  const data=await fetch('resources.json').then(r=>r.json());
+  const arr=Array.isArray(data)?data:(data.resources??data.sites??data.Sites??data.Books??[]);
+  res=arr.map((item,i)=>({
+    id:item.id??i+1,
+    title:item.title??'Untitled',
+    author:item.author??'',
+    url:item.link||item.url||item.author||'',
+    desc:item.description??''
+  })).filter(r=>r.url);
+}
+
+function ytv(u){
+  const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);
+  return 'https://www.youtube.com/embed/'+id;
+}
+function proxy(u){return /youtube\.com|youtu\.be/.test(u)?ytv(u):'/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
+function pick(){
+  if(!res.length) return null;
+  let p=res[Math.random()*res.length|0];
+  while(res.length>1&&p===cur)p=res[Math.random()*res.length|0];
+  return p;
+}
+const frame=document.getElementById('view');
+const loader=document.getElementById('loader');
+frame.addEventListener('load',()=>loader.classList.add('hidden'));
+
+function show(r){
+  if(!r){title.textContent='No resources';desc.textContent='';return;}
+  cur=r; loader.classList.remove('hidden');
+  frame.src=proxy(r.url);
+  title.textContent=`#${r.id} — ${r.title}`;
+  desc.textContent=r.author||r.desc;
+}
+
+home.onclick = ()=>location.href='/';
+open.onclick = ()=>cur&&window.open(cur.url,'_blank');
+next.onclick = ()=>show(pick());
+share.onclick= ()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${cur.url}`);
+
+await loadList();
+show(pick());
+if(parent!==window)Ready();
+</script>
+</body>
+</html>

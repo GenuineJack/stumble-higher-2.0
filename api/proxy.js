@@ -1,1 +1,6 @@
-export default async function handler(req,res){const u=req.query.u,ua=req.query.ua||req.headers['user-agent']||'Mozilla/5.0';if(!u)return res.status(400).send('Missing');try{const html=await(await fetch(u,{headers:{'user-agent':ua}})).text();res.setHeader('Content-Type','text/html');res.send(html);}catch{res.status(500).send('Proxy error');}}
+export default async function handler(req,res){
+  const url=req.query.u, ua=req.query.ua||req.headers['user-agent']||'Mozilla/5.0';
+  if(!url) return res.status(400).send('Missing url');
+  try{const r=await fetch(url,{headers:{'user-agent':ua}});res.setHeader('Content-Type','text/html');res.send(await r.text());}
+  catch{res.status(500).send('Proxy error');}
+}
