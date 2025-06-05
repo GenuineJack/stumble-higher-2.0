@@ -4,6 +4,28 @@
 <meta charset="utf-8">
 <title>Stumble Higher</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ①  Mini-app Open Graph + frame meta -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Stumble Higher">
+<meta property="og:description" content="Press one button. Discover the web.">
+<meta property="og:image"       content="https://i.imgur.com/CIzWvqk.png">
+
+<meta property="fc:frame" content='{
+  "version": "next",
+  "imageUrl": "https://i.imgur.com/CIzWvqk.png",
+  "button": {
+    "title": "Start Stumbling",
+    "action": {
+      "type": "launch_frame",
+      "name": "Stumble Higher",
+      "url": "https://www.stumblehigher.press/frame.html",
+      "splashImageUrl": "https://i.imgur.com/CIzWvqk.png",
+      "splashBackgroundColor": "#141414"
+    }
+  }
+}'>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root{--brand:#FF6D0E;}
@@ -16,34 +38,45 @@
 .btn-brand:hover{background-color:#e05f04;transform:translateY(-4px);}
 </style>
 </head>
+
 <body class="bg-zinc-900 text-white flex flex-col justify-center items-center min-h-screen text-center relative">
 <button id="aboutBtn" class="absolute top-5 right-5 text-2xl">❓</button>
 
-<h1 class="text-5xl md:text-6xl font-extrabold">Stumble <span style="color:var(--brand)">Higher</span></h1>
-<p class="max-w-xl mx-auto mt-6 text-lg md:text-2xl opacity-80">A one‑click portal to curated articles, books, and tools that push your thinking higher.</p>
+<h1 class="text-5xl md:text-6xl font-extrabold">
+  Stumble <span style="color:var(--brand)">Higher</span>
+</h1>
+<p class="max-w-xl mx-auto mt-6 text-lg md:text-2xl opacity-80">
+  A one-click portal to curated articles, books, and tools that push your thinking higher.
+</p>
 <a href="/frame.html" class="btn-brand mt-16">Start Stumbling →</a>
 
 <footer class="mt-24 text-sm opacity-70">
-  A <a href="https://highermarket.xyz/" class="underline hover:text-orange-300">HIGHER MARKET</a> PROJECT
+  A
+  <a href="https://highermarket.xyz/" class="underline hover:text-orange-300">HIGHER MARKET</a>
+  PROJECT
 </footer>
 
+<!-- About modal -->
 <div id="aboutModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center">
   <div class="bg-zinc-800 p-6 rounded-2xl max-w-md text-center">
     <h2 class="text-xl font-bold mb-3">About Stumble Higher</h2>
     <p class="text-sm leading-relaxed mb-4">
-      Tap <strong>Start Stumbling</strong> to load a random hand‑picked site, then hit <em>STUMBLE HIGHER</em> anytime for something new.
+      Tap <strong>Start Stumbling</strong> to load a random hand-picked site,
+      then hit <em>STUMBLE&nbsp;HIGHER</em> anytime for something new.
     </p>
     <button id="closeAbout" class="btn-brand px-8 py-2 text-base">Got it</button>
   </div>
 </div>
 
+<!-- ②  Load Farcaster SDK + send ready() -->
+<script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
 <script>
-aboutBtn.onclick=()=>aboutModal.classList.remove('hidden');
-closeAbout.onclick=()=>aboutModal.classList.add('hidden');
+  // About-modal toggles
+  aboutBtn.onclick  = () => aboutModal.classList.remove('hidden');
+  closeAbout.onclick = () => aboutModal.classList.add('hidden');
 
-   <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
-        <script>
-            frame.sdk.actions.ready();
+  // Tell Warpcast the landing page is ready
+  if (window.frame?.sdk?.actions?.ready) frame.sdk.actions.ready();
 </script>
 </body>
 </html>
