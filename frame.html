@@ -1,91 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Stumble Higher – Explore</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{--brand:#FF6D0E;}
-.btn{ @apply px-4 py-2 rounded-full font-semibold text-xs flex justify-center items-center;}
-.btn-icon{width:2.5rem;}
-.btn-brand{background-color:var(--brand);}
-.btn-brand:hover{background-color:#e05f04;}
-</style>
+  <meta charset="utf-8" />
+  <title>Stumble Higher – Frame</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root { --brand:#FF6D0E; }
+    .btn      { @apply inline-flex items-center justify-center text-sm font-semibold rounded-full bg-[color:var(--brand)] px-4 py-2 transition; }
+    .btn:hover{ background:#e05f04; }
+    #next     { flex:1; font-weight:700; }
+  </style>
 </head>
+
 <body class="bg-zinc-900 text-white flex flex-col h-screen relative">
-<iframe id="view" class="flex-1 w-full bg-zinc-800" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
 
-<!-- Loader -->
-<div id="loader" class="absolute inset-0 flex items-center justify-center bg-black/40 hidden">
-  <svg class="animate-spin h-10 w-10 text-white" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-  </svg>
-</div>
+  <!-- ✦ MAIN VIEWPORT -->
+  <iframe id="frame" class="flex-1 w-full bg-zinc-800"
+          sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
 
-<div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
-  <div class="min-h-[48px]">
-    <h2 id="title" class="font-semibold text-sm truncate"></h2>
-    <p id="desc" class="text-xs opacity-70 truncate"></p>
+  <!-- ✦ LOADER -->
+  <div id="loader" class="absolute inset-0 hidden items-center justify-center bg-black/40">
+    <svg class="animate-spin h-10 w-10" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" class="opacity-25" />
+      <path d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="white" class="opacity-75" />
+    </svg>
   </div>
-  <div class="flex items-center gap-2">
-    <button id="home"  class="btn btn-brand btn-icon">🏠</button>
-    <button id="open"  class="btn btn-brand btn-icon">🌐</button>
-    <button id="next"  class="flex-1 py-3 rounded-full font-bold text-sm" style="background:var(--brand)">STUMBLE HIGHER</button>
-    <button id="share" class="btn btn-brand btn-icon">📤</button>
+
+  <!-- ✦ INFO + CONTROLS -->
+  <div class="bg-zinc-950/80 backdrop-blur-sm p-3 space-y-2">
+    <div>
+      <h2 id="title" class="font-semibold text-sm truncate"></h2>
+      <p  id="desc"  class="text-xs opacity-70 truncate"></p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="home"  class="btn">🏠</button>
+      <button id="open"  class="btn">🌐</button>
+      <button id="next"  class="btn" style="flex:1">STUMBLE&nbsp;HIGHER</button>
+      <button id="share" class="btn">📤</button>
+    </div>
   </div>
-</div>
 
-<script type="module">
-const Ready=()=>parent.postMessage({type:'ready'},'*');
-const Share=txt=>parent.postMessage({type:'compose_cast',text:txt},'*');
+  <script type="module">
+    /* ------------------------------------------------------------- *
+     * Helper functions
+     * ------------------------------------------------------------- */
+    const iframe = document.getElementById('frame');
+    const loader = document.getElementById('loader');
+    const title  = document.getElementById('title');
+    const desc   = document.getElementById('desc');
 
-let res=[], cur=null;
+    const TIMEOUT_MS = 3000;
+    let timer = null, cur = null, list = [];
 
-async function loadList(){
-  const data=await fetch('resources.json').then(r=>r.json());
-  const arr=Array.isArray(data)?data:(data.resources??data.sites??data.Sites??data.Books??[]);
-  res=arr.map((item,i)=>({
-    id:item.id??i+1,
-    title:item.title??'Untitled',
-    author:item.author??'',
-    url:item.link||item.url||item.author||'',
-    desc:item.description??''
-  })).filter(r=>r.url);
-}
+    /** Mobile-UA fetch through server proxy */
+    async function fetchViaProxy(url) {
+      const r = await fetch('/api/proxy?u=' + encodeURIComponent(url));
+      return { ok:r.ok, type:r.headers.get('content-type')||'', html: await r.text() };
+    }
 
-function ytv(u){
-  const id=(u.includes('watch')?new URL(u).searchParams.get('v'):u.split('/').pop()).substring(0,11);
-  return 'https://www.youtube.com/embed/'+id;
-}
-function proxy(u){return /youtube\.com|youtu\.be/.test(u)?ytv(u):'/api/proxy?u='+encodeURIComponent(u)+'&ua='+encodeURIComponent(navigator.userAgent);}
-function pick(){
-  if(!res.length) return null;
-  let p=res[Math.random()*res.length|0];
-  while(res.length>1&&p===cur)p=res[Math.random()*res.length|0];
-  return p;
-}
-const frame=document.getElementById('view');
-const loader=document.getElementById('loader');
-frame.addEventListener('load',()=>loader.classList.add('hidden'));
+    /** Quick mime sniff */
+    function classify(type, url) {
+      if (/\.pdf$/i.test(url) || type.includes('application/pdf'))     return 'pdf';
+      if (type.startsWith('image/'))                                   return 'image';
+      if (/vnd\.|msword|excel|powerpoint|epub/i.test(type))            return 'binary';
+      return 'html';
+    }
 
-function show(r){
-  if(!r){title.textContent='No resources';desc.textContent='';return;}
-  cur=r; loader.classList.remove('hidden');
-  frame.src=proxy(r.url);
-  title.textContent=`#${r.id} — ${r.title}`;
-  desc.textContent=r.author||r.desc;
-}
+    /** Toast helper */
+    function toast(msg) {
+      const t=document.createElement('div');
+      t.textContent=msg;
+      t.className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black/80 text-xs px-4 py-2 rounded";
+      document.body.appendChild(t);
+      setTimeout(()=>t.remove(),1500);
+    }
 
-home.onclick = ()=>location.href='/';
-open.onclick = ()=>cur&&window.open(cur.url,'_blank');
-next.onclick = ()=>show(pick());
-share.onclick= ()=>cur&&Share(`Found "${cur.title}" on Stumble Higher – ${cur.url}`);
+    /** Random picker w/ no immediate repeats */
+    function pick() {
+      if (!list.length) return null;
+      let r = list[Math.random()*list.length|0];
+      while (list.length > 1 && r === cur) r = list[Math.random()*list.length|0];
+      return r;
+    }
 
-await loadList();
-show(pick());
-if(parent!==window)Ready();
-</script>
+    /* ------------------------------------------------------------- *
+     * Core show() with multi-layer fallbacks
+     * ------------------------------------------------------------- */
+    async function show(res) {
+      if (!res) { title.textContent='No resources'; desc.textContent=''; return; }
+      cur = res;
+
+      loader.classList.remove('hidden');
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => show(pick()), TIMEOUT_MS);  // auto-skip
+
+      try {
+        const { ok, type, html } = await fetchViaProxy(res.url);
+        if (!ok) throw new Error('fetch failed');
+
+        switch (classify(type, res.url)) {
+          case 'pdf':
+            iframe.src = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(res.url)}`;
+            break;
+
+          case 'image':
+            iframe.srcdoc = `<html><body style="margin:0">
+              <img src="/api/proxy?u=${encodeURIComponent(res.url)}" style="width:100%">
+            </body></html>`;
+            break;
+
+          case 'binary':
+            iframe.srcdoc = `<html><body style="font-family:sans-serif;
+              display:flex;justify-content:center;align-items:center;height:100%;background:#fafafa">
+              <p>File type not viewable.<br><a href="${res.url}" target="_blank">
+              Open externally ↗</a></p></body></html>`;
+            break;
+
+          default: // HTML
+            iframe.srcdoc = html;  // sidestep X-Frame bans
+        }
+
+        iframe.onload = () => { loader.classList.add('hidden'); clearTimeout(timer); };
+      } catch {
+        toast('Couldn’t load – skipping');
+        setTimeout(()=>show(pick()), 1500);
+      }
+
+      title.textContent = `#${res.id} — ${res.title}`;
+      desc.textContent  = res.author || res.description || '';
+    }
+
+    /* ------------------------------------------------------------- *
+     * Buttons
+     * ------------------------------------------------------------- */
+    home.onclick  = () => location.href = '/';
+    open.onclick  = () => cur && window.open(cur.url, '_blank');
+    next.onclick  = () => show(pick());
+    share.onclick = () => cur && parent.postMessage({type:'compose_cast',
+                       text:`Found "${cur.title}" on Stumble Higher – ${cur.url}`},'*');
+
+    /* ------------------------------------------------------------- *
+     * Start
+     * ------------------------------------------------------------- */
+    list = (await fetch('/resources.json').then(r=>r.json()).catch(()=>[])).resources || [];
+    show(pick());
+
+    // ready signal for Warpcast mini-app shell
+    if (parent !== window && window.frame?.sdk?.actions?.ready) frame.sdk.actions.ready();
+  </script>
 </body>
 </html>
