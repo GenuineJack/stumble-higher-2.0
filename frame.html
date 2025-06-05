@@ -144,8 +144,11 @@
     /* ------------------------------------------------------------- *
      * Start
      * ------------------------------------------------------------- */
-    list = (await fetch('/resources.json').then(r=>r.json()).catch(()=>[])).resources || [];
-    show(pick());
+    const data = await fetch('/resources.json').then(r => r.json()).catch(() => []);
+    list = Array.isArray(data) ? data                             // plain array
+          : data.resources       ??                               // { resources:[…] }
+            data.links           ??                               // or some other key
+            [];                                                    // fallback
 
     // ready signal for Warpcast mini-app shell
     if (parent !== window && window.frame?.sdk?.actions?.ready) frame.sdk.actions.ready();
